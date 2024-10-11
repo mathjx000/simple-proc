@@ -1,7 +1,7 @@
 # Simple Proc(essor)
 A simple and *feature light* file processor.
 
-[!IMPORTANT]
+> [!IMPORTANT]
 > This tool was made to be small and portable and is not intended to be as
 > feature-rich and as reliable as big preprocessors. It is lacks some important
 > features such as proper error handling.
