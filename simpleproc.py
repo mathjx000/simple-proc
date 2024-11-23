@@ -278,7 +278,6 @@ for pathname in args.files:
     elif not os.path.exists(pathname):
         raise RuntimeError(f"{pathname}: file or directory does not exists")
     else:
-        os.path.split(pathname)[0]
         skip_root = None
         for path, dirs, files in os.walk(pathname):
             if skip_root is not None and path.startswith(skip_root): continue
