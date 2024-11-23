@@ -274,19 +274,21 @@ output = args.output[0]
 
 os.makedirs(output, exist_ok=True)
 
-for pathname in args.files:
-    if os.path.isfile(pathname):
-        process_file(pathname, os.path.join(output, pathname))
-    elif not os.path.exists(pathname):
-        raise RuntimeError(f"{pathname}: file or directory does not exists")
+for arg_pathname in args.files:
+    if os.path.isfile(arg_pathname):
+        process_file(arg_pathname, os.path.join(output, os.path.basename(arg_pathname)))
+    elif not os.path.exists(arg_pathname):
+        raise RuntimeError(f"{arg_pathname}: file or directory does not exists")
     else:
         skip_root = None
-        for path, dirs, files in os.walk(pathname):
+        for path, dirs, files in os.walk(arg_pathname):
             if skip_root is not None and path.startswith(skip_root): continue
             if ".buildignore" in files:
                 skip_root = path
                 continue
 
             for file in files:
-                fullpathname = os.path.join(path, file)
-                process_file(fullpathname, os.path.join(output, fullpathname))
+                process_file(
+                    os.path.join(path, file),
+                    os.path.join(output, os.path.join(os.path.relpath(path, start=arg_pathname), file))
+                )
