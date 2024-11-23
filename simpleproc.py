@@ -240,6 +240,8 @@ def macro_separated(s, *args):
 MACROS["separated"] = macro_separated
 
 def process_file(source: str, destination: str):
+    print(f"processing '{source}' -> '{destination}'")
+
     lines = macro_include_eval(source)
 
     try:
