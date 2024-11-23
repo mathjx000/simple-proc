@@ -15,8 +15,8 @@ MIME_2_DELIMITERS: dict[str | None, tuple[str, str]] = {
     "text/x-python": (r'"""@@', r'@@"""'),
     "text/javascript": (r"\/\*@", r"@\*\/"),
 
-    "text/html": (r"<!--", r"-->"),
-    "text/xml": (r"<!--", r"-->"),
+    "text/html": (r"<!--@", r"@-->"),
+    "text/xml": (r"<!--@", r"@-->"),
 }
 
 COMMON_TOKEN_RULES = [
