@@ -268,7 +268,7 @@ class State:
         return f"variables={self.variables}, emitlines={self.emitlines}, relpath={self.relpath}"
 
 state = State()
-state.variables = dict(args.variable)
+state.variables = dict(args.variable) if args.variable is not None else {}
 
 output = args.output[0]
 
