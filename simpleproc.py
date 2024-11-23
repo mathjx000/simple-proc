@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
 import argparse
+import glob
 import mimetypes
 import os
 import re
@@ -212,7 +213,7 @@ MACROS["include_eval"] = macro_include_eval
 def macro_include(pathname):
     global state
 
-    pathname = os.path.join(state.relpath, str(pathname))
+    pathname = os.path.join(state.relpath, os.path.normpath(str(pathname)))
     with open(pathname, mode="rt") as file:
         lines = file.readlines()
 
@@ -274,21 +275,47 @@ output = args.output[0]
 
 os.makedirs(output, exist_ok=True)
 
+IGNORE_FILE_NAME = ".procignore"
+
 for arg_pathname in args.files:
+    arg_pathname = os.path.normpath(arg_pathname)
+
     if os.path.isfile(arg_pathname):
         process_file(arg_pathname, os.path.join(output, os.path.basename(arg_pathname)))
     elif not os.path.exists(arg_pathname):
         raise RuntimeError(f"{arg_pathname}: file or directory does not exists")
     else:
-        skip_root = None
+        ignore_stack: dict[str, re.Pattern] = {}
+        lastdir = ""
         for path, dirs, files in os.walk(arg_pathname):
-            if skip_root is not None and path.startswith(skip_root): continue
-            if ".buildignore" in files:
-                skip_root = path
-                continue
+            while not path.startswith(lastdir):
+                lastdir, tail = os.path.split(lastdir)
+                ignore_stack.pop(tail, None)
+
+            ignore = ignore_stack.get(lastdir, None)
+            lastdir = path
+
+            try:
+                files.remove(IGNORE_FILE_NAME)
+
+                with open(os.path.join(path, IGNORE_FILE_NAME), mode="rt") as fignore:
+                    lines = list(filter(lambda l: len(l) > 0, map(str.strip, filter(lambda l: not l.startswith('#'), fignore.readlines()))))
+
+                ignore = re.compile((ignore.pattern + '|' if ignore is not None else "") + r'|'.join(map(
+                    lambda p: glob.translate(p, recursive=True, include_hidden=True),
+                    # TODO: test on Windows
+                    map(os.path.normpath, lines))
+                ))
+            except ValueError:
+                pass
+
+            ignore_stack[path] = ignore
 
             for file in files:
-                process_file(
-                    os.path.join(path, file),
-                    os.path.join(output, os.path.join(os.path.relpath(path, start=arg_pathname), file))
-                )
+                relpathname = os.path.join(os.path.relpath(path, start=arg_pathname), file)
+
+                if ignore is None or ignore.search(relpathname) is None:
+                    process_file(
+                        os.path.join(path, file),
+                        os.path.join(output, relpathname)
+                    )
